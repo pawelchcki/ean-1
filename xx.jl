@@ -31,10 +31,9 @@ function reduce_row(A, i)
   end
 end
 
-function gaussian_backwards_substitution(A)
+function gaussian_backwards_substitution(A, interval=false)
   A=copy(A)
   Aint = convert(Array{Interval, 2}, A)
-  println(Aint);
   n = size(A,1)
   for i = 1:n-1
     p = findfirst(A[i:n,i]) # find first nonzero
@@ -55,12 +54,17 @@ function gaussian_backwards_substitution(A)
       return 0;
     end
   end
-  println("x: ", reduce_augmented_matrix(Aint))
-  return reduce_augmented_matrix(A);
+  if interval
+    return reduce_augmented_matrix(Aint)
+  else
+    return reduce_augmented_matrix(A);
+  end
 end
 
-function gaussian_partial_pivoting(A)
+function gaussian_partial_pivoting(A, interval = false)
   A = copy(A)
+  Aint = convert(Array{Interval, 2}, A)
+
   n = size(A,1)
   for i = 1:n-1
     abs_array = [abs(A[j,i]) for j = i:n]
@@ -73,12 +77,20 @@ function gaussian_partial_pivoting(A)
 
     subst(A, p, i)
     reduce_row(A, i)
+    subst(Aint, p, i)
+    reduce_row(Aint, i)
   end
-
-  return reduce_augmented_matrix(A)
+  if interval
+    return reduce_augmented_matrix(Aint)
+  else
+    return reduce_augmented_matrix(A)
+  end
 end
 
+set_bigfloat_precision(80)
+A = BigFloat[30.0 591400 591700
+             5.291 -6.130 46.78]
 
-with_bigfloat_precision(50) do
-  println(gaussian_backwards_substitution(A))
-end
+
+println(gaussian_partial_pivoting(A, true) - gaussian_backwards_substitution(A, true))
+
