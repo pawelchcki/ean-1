@@ -14,6 +14,23 @@ function reduce_augmented_matrix(A)
   return X
 end
 
+function subst(A, i, p)
+  if p != i
+    t = A[i,:]
+    A[i,:] = A[p,:]
+    A[p,:] = t
+  end
+end
+
+function reduce_row(A, i)
+  # i: row
+  for j = i+1:n
+    m = A[j,i]/A[i,i]
+    A[j,:] = A[j,:] - A[i,:]*m
+  end
+end
+
+
 function gaussian_backwards_substitution(A)
   A=copy(A)
   n = size(A,1)
@@ -25,16 +42,10 @@ function gaussian_backwards_substitution(A)
     end
     p = p + i-1 # normalize coordinates
 
-    if p != i
-      t = A[i,:]
-      A[i,:] = A[p,:]
-      A[p,:] = t
-    end
+    subst(A, p, i)
 
-    for j = i+1:n
-      m = A[j,i]/A[i,i]
-      A[j,:] = A[j,:] - A[i,:]*m
-    end
+    reduce_row(A,i)
+
     if A[n,n] == 0
       println("no unique solution exists")
       return 0;
@@ -53,33 +64,21 @@ function gaussian_partial_pivoting(A)
   A = copy(A)
   for i = 1:n-1
     abs_array = [abs(A[j,i]) for j = i:n]
-    println(abs_array)
-    val = maximum(abs_array)
-    println(val)
-
-    p = findfirst(abs_array, val) + i-1
+    p = findfirst(abs_array, maximum(abs_array)) + i-1
 
     if A[p, i] == 0
       println("no unique solution exists")
       return 0
     end
 
-    if p != i
-      t = A[i,:]
-      A[i,:] = A[p,:]
-      A[p,:] = t
-    end
-
-    for j = i+1:n
-      m = A[j,i] / A[i,i]
-      A[j,:] = A[j,:] - m*A[i,:]
-    end
+    subst(A, p, i)
+    reduce_row(A, i)
   end
 
   return reduce_augmented_matrix(A)
 end
 
-X = gaussian_partial_pivoting(A)
+X = gaussian_backwards_substitution(A)
 
 println(X)
 
