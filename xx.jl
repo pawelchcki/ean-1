@@ -1,4 +1,4 @@
-using Gadfly, MPFI
+using   MPFI
 import Base: convert, isless, promote_rule
 function isless(x::Interval, y::Interval)
   return ccall((:mpfi_cmp_default, :libmpfi), Int32, (Ptr{Interval}, Ptr{Interval}), &x, &y) == -1
@@ -6,7 +6,6 @@ end
 convert(::Type{Interval}, x::ASCIIString) = Interval(x)
 convert(::Type{BigFloat}, x::ASCIIString) = BigFloat(x)
 promote_rule(::Type{Interval}, ::Type{Int64}) = Interval
-
 
 A =  [ "1.0" -1.0 2 -1 -8
        2 -2 3 -3 -20
@@ -72,8 +71,7 @@ function gaussian_backwards_substitution(A, interval=false)
   end
 end
 
-function gaussian_partial_pivoting(A, interval = false)
-  Aint = prepareA_interval(A)
+function gaussian_partial_pivoting(A)
   A = prepareA_interval(A)
 
   n = size(A,1)
@@ -87,14 +85,8 @@ function gaussian_partial_pivoting(A, interval = false)
 
     subst(A, p, i)
     reduce_row(A, i)
-    subst(Aint, p, i)
-    reduce_row(Aint, i)
   end
-  if interval
-    return reduce_augmented_matrix(Aint)
-  else
-    return reduce_augmented_matrix(A)
-  end
+  return reduce_augmented_matrix(A)
 end
 
 set_bigfloat_precision(80)
@@ -102,6 +94,14 @@ set_bigfloat_precision(80)
 #              5.291 -6.130 46.78]
 
 
+# println(gaussian_partial_pivoting(A))
+X = prepareA_interval(A)
+
 println(gaussian_partial_pivoting(A))
 
-println(gaussian_partial_pivoting(A,true))
+
+A = X[:,1:4]
+b = X[:, 5]
+import Base.real
+real(x::Interval) = x
+println(A\b)
